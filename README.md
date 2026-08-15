@@ -47,6 +47,22 @@ whenever one of them is passing.
 `health_check.sh` (delegated to by `ops verify`) covers only the sms/lead-guard
 pipeline and disk. Its "ALL GREEN" is **not** an all-clear for the estate.
 
+## State: seed vs live
+
+    state/ops_state.seed.json   committed    canonical item/sales definitions
+    state/ops_state.json        gitignored   live state + runtime results
+
+`ops close` rewrites the live file nightly, so it is kept out of git to stop the
+working tree from being permanently dirty. On first run `load_state()` bootstraps
+the live file from the seed. After that, new seed entries are merged into live
+**additively** — anything already present in live is never overwritten, so adding
+a seeded item cannot clobber recorded verification results.
+
+`last_verified` is always `null` in the seed: a fresh install must never claim a
+check it has not actually run.
+
+To add work items, edit the seed and run any `ops` command — the merge is automatic.
+
 ## Secrets
 
 Nothing credential-shaped is committed here, and all rollup detail strings are
