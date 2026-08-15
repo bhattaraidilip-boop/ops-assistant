@@ -7,16 +7,16 @@
       "task": "Canonicalization + sitemap sync verification",
       "status": "COMPLETE",
       "priority": "P2",
-      "last_verified": "2026-08-15",
-      "last_known_working": "2026-08-15",
-      "evidence": "smoketest:ads_leadform_coverage @ 2026-08-14T06:22:01.471831-06:00 \u2014 0 page(s) with a form but no lead-guard",
+      "last_verified": null,
+      "last_known_working": "2026-08-08",
+      "evidence": "SEO_VERIFIED_PASS_20260808.md (raw HTML 78, canonical 75, sitemap 75, missing 0, extra 0, dupes collapsed 3, HTTP regression PASS) \u2014 NO ongoing smoketest check exists for canonicalization/sitemap; this is point-in-time evidence only",
       "git_commit": "18fb984",
       "blocker": null,
       "next_action": "None \u2014 do not reopen unless a future verification fails",
       "requires_dilli": false,
       "owner": "claude",
       "updated_at": "2026-08-08",
-      "rollup_check": "ads_leadform_coverage"
+      "rollup_check": null
     },
     {
       "id": "ADS_SPRINT1_CLIENT_CONFIRMATION",
