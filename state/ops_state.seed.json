@@ -1,0 +1,107 @@
+{
+  "items": [
+    {
+      "id": "ADS_SEO_CANONICALIZATION",
+      "business": "AD's Construction",
+      "system": "SEO / sitemap",
+      "task": "Canonicalization + sitemap sync verification",
+      "status": "COMPLETE",
+      "priority": "P2",
+      "last_verified": null,
+      "last_known_working": "2026-08-08",
+      "evidence": "SEO_VERIFIED_PASS_20260808.md (raw HTML 78, canonical 75, sitemap 75, missing 0, extra 0, dupes collapsed 3, HTTP regression PASS) \u2014 NO ongoing smoketest check exists for canonicalization/sitemap; this is point-in-time evidence only",
+      "git_commit": "18fb984",
+      "blocker": null,
+      "next_action": "None \u2014 do not reopen unless a future verification fails",
+      "requires_dilli": false,
+      "owner": "claude",
+      "updated_at": "2026-08-08",
+      "rollup_check": null
+    },
+    {
+      "id": "ADS_SPRINT1_CLIENT_CONFIRMATION",
+      "business": "AD's Construction",
+      "system": "Lead pipeline / Sprint 1 proof",
+      "task": "Get Adrian Delgado Jr. to confirm in writing he's receiving and satisfied with leads",
+      "status": "DILLI_DECISION_REQUIRED",
+      "priority": "P1",
+      "last_verified": null,
+      "last_known_working": "2026-08-15",
+      "evidence": "smoketest:ads_lead_pipeline @ 2026-08-14T06:30:07.021762-06:00 \u2014 pipeline OK",
+      "git_commit": null,
+      "blocker": "Adrian has never formally confirmed receipt/satisfaction \u2014 this is the sole item blocking Sprint 1 closure",
+      "next_action": "Dilli calls or emails Adrian (delgadoa36@gmail.com) for written confirmation",
+      "requires_dilli": true,
+      "owner": "dilli",
+      "updated_at": "2026-08-08",
+      "rollup_check": "ads_lead_pipeline"
+    },
+    {
+      "id": "3TG_NGINX_CERT_WARNING",
+      "business": "3 Thirsty Goats",
+      "system": "Shared infra / nginx TLS",
+      "task": "Investigate nginx certificate warning",
+      "status": "ACTION_NEEDED",
+      "priority": "P2",
+      "last_verified": null,
+      "last_known_working": null,
+      "evidence": "NEVER machine-verified - no rollup_check linked",
+      "git_commit": null,
+      "blocker": "Not yet diagnosed",
+      "next_action": "Run `ops verify` shared block, then certbot certificates / openssl check on the flagged vhost",
+      "requires_dilli": false,
+      "owner": "claude",
+      "updated_at": "2026-08-08",
+      "rollup_check": null
+    },
+    {
+      "id": "AUTOBLOG_WP_ROTATION_3TG_LG_EW",
+      "business": "Shared infra",
+      "system": "Autoblog credential rotation",
+      "task": "Rotate remaining WP app passwords (LG, EW, dillibhattarai) and delete old Groq/Gemini keys from consoles",
+      "status": "ACTION_NEEDED",
+      "priority": "P2",
+      "last_verified": null,
+      "last_known_working": "2026-07-21",
+      "evidence": "smoketest:credentials @ 2026-08-14T12:40:05.574159+00:00 \u2014 2 of 25 FAILING: wp:EW (HTTP 404 <html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not F); api:gemini (HTTP 404)",
+      "git_commit": null,
+      "blocker": "2 of 25 FAILING: wp:EW (HTTP 404 <html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not F); api:gemini (HTTP 404)",
+      "next_action": "Generate new WP app passwords in each site's admin, `read -s` + sudo sed into /etc/autoblog/autoblog.env, verify 200 via wp-json/wp/v2/users/me",
+      "requires_dilli": true,
+      "owner": "dilli",
+      "updated_at": "2026-08-08",
+      "rollup_check": "credentials"
+    }
+  ],
+  "sales": [
+    {
+      "company": "AD's Construction (Adrian Delgado Jr.)",
+      "contact": "delgadoa36@gmail.com",
+      "last_contact": "2026-07-26",
+      "offer": "Lead capture + notification system (delivered)",
+      "demo": "n/a - live client",
+      "proposal": "n/a - live client",
+      "response": "No written confirmation yet",
+      "next_follow_up": "2026-08-08",
+      "status": "FOLLOW_UP_TODAY",
+      "requires_dilli": true
+    }
+  ],
+  "evidence_ledger": [
+    {
+      "gate_id": "ADS_SEO_CANONICALIZATION",
+      "status": "COMPLETE",
+      "date": "2026-08-08",
+      "evidence": "SEO_VERIFIED_PASS_20260808.md",
+      "commit": "18fb984",
+      "verification_result": "PASS - raw HTML 78, canonical 75, sitemap 75, missing 0, extra 0, dupes collapsed 3, HTTP regression PASS",
+      "backup_tag": "backup-root-cause-fix"
+    }
+  ],
+  "meta": {
+    "seeded_from": "Claude memory as of 2026-08-08 \u2014 every item above traces to a prior verified session. Anything not listed here is UNKNOWN, not healthy. First `ops verify` run should populate the rest (AD's site/lead system/blog/GBP, 3TG website/blog cron/GBP/inventory/Clover/backups, ExceloWeb website/lead API/notifications/demos, shared cron/backups/disk/services/OAuth/DB) rather than have status invented for them.",
+    "schema_version": 2,
+    "rollup_source": "/home/opc/smoketest/rollup.json",
+    "seed_note": "Canonical definitions. Live state is state/ops_state.json (gitignored). New entries here are merged into live additively on next ops run; existing live items are never overwritten. last_verified is always null in the seed."
+  }
+}

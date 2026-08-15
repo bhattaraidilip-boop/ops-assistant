@@ -16,3 +16,7 @@ __pycache__/
 *credential*
 *.key
 *.pem
+
+# Live runtime state — rewritten nightly by `ops close`. The committed
+# canonical definitions live in state/ops_state.seed.json.
+state/ops_state.json

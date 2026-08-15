@@ -23,6 +23,7 @@ Usage:
     ops close
     ops history [item_id]
 """
+import copy
 import json
 import os
 import re
@@ -32,7 +33,8 @@ import shutil
 from datetime import datetime, timezone
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-STATE_PATH = os.path.join(BASE, "state", "ops_state.json")
+STATE_PATH = os.path.join(BASE, "state", "ops_state.json")        # live, gitignored
+SEED_PATH = os.path.join(BASE, "state", "ops_state.seed.json")    # committed
 SNAPSHOT_DIR = os.path.join(BASE, "snapshots")
 LOG_DIR = os.path.join(BASE, "logs")
 
@@ -200,10 +202,56 @@ def now_iso():
 
 
 def load_state():
+    """Load live state, bootstrapping from the seed on first run.
+
+    SEED (committed)  = canonical item/sales definitions.
+    LIVE (gitignored) = seed + runtime results (last_verified, status, ...).
+    `ops close` rewrites LIVE nightly, so keeping it out of git is what stops
+    the working tree from being permanently dirty.
+    """
     if not os.path.exists(STATE_PATH):
-        sys.exit(f"FATAL: state file missing at {STATE_PATH}")
+        if os.path.exists(SEED_PATH):
+            shutil.copy2(SEED_PATH, STATE_PATH)
+            print(f"[bootstrap] live state created from seed -> {STATE_PATH}")
+        else:
+            sys.exit(f"FATAL: no live state at {STATE_PATH} and no seed at {SEED_PATH}")
     with open(STATE_PATH) as f:
-        return json.load(f)
+        state = json.load(f)
+    _merge_seed(state)
+    return state
+
+
+def _merge_seed(state):
+    """Additive-only merge: new seed entries appear in live state.
+
+    Seeding a new item must never clobber runtime results already recorded
+    for existing items, so entries present in LIVE are left completely alone.
+    """
+    if not os.path.exists(SEED_PATH):
+        return
+    try:
+        with open(SEED_PATH) as f:
+            seed = json.load(f)
+    except Exception as e:
+        print(f"[seed] WARNING: {SEED_PATH} unreadable ({e}) — live state used as-is")
+        return
+
+    added = []
+    live_ids = {i.get("id") for i in state.setdefault("items", [])}
+    for it in seed.get("items", []):
+        if it.get("id") not in live_ids:
+            state["items"].append(copy.deepcopy(it))
+            added.append(it.get("id"))
+    live_sales = {s.get("company") for s in state.setdefault("sales", [])}
+    for s in seed.get("sales", []):
+        if s.get("company") not in live_sales:
+            state["sales"].append(copy.deepcopy(s))
+            added.append(f"sales:{s.get('company')}")
+
+    if added:
+        save_state(state)
+        print(f"[seed] {len(added)} new entr(y/ies) merged from seed: "
+              f"{', '.join(str(a) for a in added)}")
 
 
 def save_state(state):
