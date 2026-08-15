@@ -339,6 +339,11 @@ def cmd_morning(state):
 
     print("\nNEEDS DILLI (cannot proceed without you)")
     _print_items(dilli_required or ["(none)"])
+    # Sales gated on Dilli belong here too — money and messaging to
+    # customers/prospects are never things ops acts on by itself.
+    dilli_sales = [s for s in state["sales"] if s.get("requires_dilli")]
+    for s in dilli_sales:
+        print(f"  - [SALES] {s['company']} — {s.get('response') or s.get('offer')}")
 
 
 def _print_items(items):
@@ -507,6 +512,7 @@ def cmd_sales(state):
                "BLOCKED": [], "STALE": []}
     for s in state["sales"]:
         buckets.setdefault(s["status"], []).append(s)
+    known = ["FOLLOW_UP_TODAY", "READY_TO_SEND", "WAITING", "BLOCKED", "STALE"]
     for label, key in [("FOLLOW UP TODAY", "FOLLOW_UP_TODAY"),
                         ("READY TO SEND", "READY_TO_SEND"),
                         ("WAITING", "WAITING"), ("BLOCKED", "BLOCKED"),
@@ -514,10 +520,31 @@ def cmd_sales(state):
         print(label)
         if buckets[key]:
             for s in buckets[key]:
-                print(f"  - {s['company']} ({s['contact']}) — {s['offer']}")
+                _print_sale(s)
         else:
             print("  (none)")
         print()
+
+    # Catch-all: an entry with an unrecognised status used to be silently
+    # invisible here — money quietly falling out of the report is exactly the
+    # failure mode this tool exists to prevent.
+    for key, entries in buckets.items():
+        if key not in known and entries:
+            print(f"{key} (unrecognised status — fix or add to the known list)")
+            for s in entries:
+                _print_sale(s)
+            print()
+
+
+def _print_sale(s):
+    money = f" [{s['offer']}]" if s.get("offer") else ""
+    who = s.get("contact") or "contact NOT RECORDED"
+    print(f"  - {s['company']} ({who}){money}")
+    if s.get("response"):
+        print(f"      {s['response']}")
+    if s.get("next_follow_up"):
+        print(f"      next follow-up: {s['next_follow_up']}"
+              f"{'  [NEEDS DILLI]' if s.get('requires_dilli') else ''}")
 
 
 # --------------------------------------------------------------------------
