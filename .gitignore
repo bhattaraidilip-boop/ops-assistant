@@ -1,0 +1,18 @@
+# Runtime artifacts — regenerated every run, never source of truth.
+logs/
+snapshots/
+__pycache__/
+*.pyc
+*.tmp
+
+# Local backups made during edits — may contain pre-fix state.
+*.bak-*
+*.orig
+
+# Defensive: never let an env/credential file into this repo.
+*.env
+.env
+*secret*
+*credential*
+*.key
+*.pem

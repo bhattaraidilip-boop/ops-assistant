@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# ops — wrapper so `ops morning` / `ops verify` etc. work from anywhere,
+# including via the /usr/local/bin/ops symlink (readlink -f resolves
+# through the symlink to the real install dir — BASH_SOURCE alone does not).
+REAL="$(readlink -f "${BASH_SOURCE[0]}")"
+DIR="$(cd "$(dirname "$REAL")" && pwd)"
+exec /usr/bin/python3 "$DIR/ops.py" "$@"
