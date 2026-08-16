@@ -57,22 +57,20 @@ ROLLUP_MAX_AGE_HOURS = 3
 # Never let a green here be read as "this system works".
 # --------------------------------------------------------------------------
 PROXY_CHECKS = {
-    "margin_report": (
-        "PROXY: checks mtime of /home/opc/lgos/last_margin_run.txt only. The cron "
-        "is `report.py | mail ... && echo date > marker`, so `&&` binds to mail's "
-        "exit status, not the report's. If report.py crashes, mail still sends an "
-        "EMPTY email, exits 0, and the marker is written -> GREEN on a failed report."
-    ),
     "ads_autoblog": (
-        "PROXY: monthly quota (posts this month vs 6). Once the month's quota is "
-        "met, this stays GREEN for the rest of the month even if autoblog is "
-        "completely broken. It measures contract compliance, not that publishing works."
+        "PROXY (partial): the quota half measures posts-this-month vs 6, so once "
+        "quota is met it stays GREEN for the rest of the month even if publishing "
+        "is broken. Its index-writability half IS a real probe — that is what "
+        "caught the 2026-08-15 PermissionError. Trust the second half, not the first."
     ),
-    "voice_agent:heartbeat": (
-        "PROXY: probe_heartbeat() returns True on EVERY branch by design "
-        "(no-calls-yet is treated as normal). It can never fail, so a dead voice "
-        "call flow is invisible here. Judge voice health by the other probes only."
-    ),
+    # FIXED 2026-08-15 — kept here as a record of what was repaired:
+    #   margin_report        was: mtime of a marker written by mail's exit status.
+    #                        now: verifies the report file exists, is fresh, and
+    #                        contains the real report sections; cron rebuilt so the
+    #                        marker only lands if report.py itself succeeded.
+    #   voice_agent:heartbeat was: returned True on every branch, could never fail.
+    #                        now: live-probes the endpoint before reporting recency.
+    # Do not re-add them unless they regress.
 }
 
 

@@ -40,9 +40,14 @@ whenever one of them is passing.
 
 | Check | Why it can lie |
 |---|---|
-| `margin_report` | Only checks the mtime of `/home/opc/lgos/last_margin_run.txt`. The cron is `report.py \| mail ... && echo date > marker` — `&&` binds to **mail's** exit status, not the report's. If `report.py` crashes, `mail` still sends an empty email, exits 0, and the marker is written. Green on a failed report. |
-| `ads_autoblog` | Monthly quota (posts this month vs 6). Once quota is met it stays green for the rest of the month even if autoblog is entirely broken. Measures contract compliance, not that publishing works. |
-| `voice_agent:heartbeat` | `probe_heartbeat()` returns `True` on every branch by design. It can never fail, so a dead voice call flow is invisible. Judge voice health by the other probes. |
+| `ads_autoblog` | Its quota half (posts-this-month vs 6) stays green for the rest of the month once quota is met, even if publishing is broken. Its index-writability half is a real probe, and is what caught the 2026-08-15 PermissionError. Trust the second half. |
+
+**Fixed 2026-08-15** (kept as a record; do not re-add unless they regress):
+
+| Check | Was | Now |
+|---|---|---|
+| `margin_report` | mtime of a marker written by the exit status of `mail`, so a crashed report still went green | verifies the report file exists, is fresh, non-empty, and contains the real report sections; cron rebuilt so the marker only lands if the report itself succeeded |
+| `voice_agent:heartbeat` | returned `True` on every branch, so it could never fail; reported a dead voice line as healthy for 9 days | live-probes the endpoint before reporting call recency |
 
 `health_check.sh` (delegated to by `ops verify`) covers only the sms/lead-guard
 pipeline and disk. Its "ALL GREEN" is **not** an all-clear for the estate.

@@ -99,7 +99,7 @@
       "priority": "P2",
       "last_verified": null,
       "last_known_working": null,
-      "evidence": null,
+      "evidence": "VERIFIED 2026-08-15 after nginx merge: xmlrpc.php -> 403 on 3thirstygoats.com, liquorgrowth.com AND exceloweb.com. exceloweb was 405 (unblocked) because the deny rule lived in exceloweb.conf, which nginx had been ignoring since 2026-08-06 due to a conflicting server_name.",
       "git_commit": null,
       "blocker": null,
       "next_action": "curl -o /dev/null -w '%{http_code}' https://<site>/xmlrpc.php for 3thirstygoats.com, liquorgrowth.com, exceloweb.com \u2014 expect 403/404 on all three; add the nginx block where missing. No smoketest check covers this yet \u2014 worth adding one.",
