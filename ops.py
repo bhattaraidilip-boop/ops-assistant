@@ -198,7 +198,27 @@ RUNBOOK_HEALTH_CHECK = os.path.expanduser("~/runbook/bin/health_check.sh")
 
 
 def now_iso():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Local date, not UTC. "Today" in a morning brief means the operator's day;
+    # UTC rolls over at 18:00 MDT and made evening runs report tomorrow's date.
+    return datetime.now().astimezone().strftime("%Y-%m-%d")
+
+
+def due(date_str):
+    """True if a follow-up date has arrived or passed. None/garbage -> False."""
+    if not date_str:
+        return False
+    try:
+        return date_str <= now_iso()   # both ISO yyyy-mm-dd, lexical == chronological
+    except Exception:
+        return False
+
+
+def days_overdue(date_str):
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        return (datetime.now().astimezone().date() - d).days
+    except Exception:
+        return 0
 
 
 def load_state():
@@ -302,7 +322,11 @@ def cmd_morning(state):
                      if i["status"] not in ("COMPLETE", "HEALTHY", "BLOCKED")
                      and not i.get("requires_dilli")
                      and i.get("owner") == "claude"]
-    sales_today = [s for s in state["sales"] if s["status"] == "FOLLOW_UP_TODAY"]
+    # Due by DATE as well as by bucket. A sale parked in WAITING whose
+    # next_follow_up has arrived is exactly the follow-up that gets forgotten,
+    # so the date decides here, not the status label.
+    sales_today = [s for s in state["sales"]
+                   if s["status"] == "FOLLOW_UP_TODAY" or due(s.get("next_follow_up"))]
 
     print(f"=== OPS MORNING — {now_iso()} ===\n")
 
@@ -319,9 +343,13 @@ def cmd_morning(state):
     # 3. WHO NEEDS FOLLOW-UP
     print("\nWHO NEEDS FOLLOW-UP")
     if sales_today:
-        for s in sales_today:
-            print(f"  - {s['company']} ({s['contact']}): {s['response']} "
-                  f"— next follow-up {s['next_follow_up']}")
+        for s in sorted(sales_today, key=lambda x: x.get("next_follow_up") or "9999"):
+            od = days_overdue(s.get("next_follow_up"))
+            flag = f"  ** {od}d OVERDUE **" if od > 0 else ("  (due today)" if od == 0 else "")
+            who = s.get("contact") or "contact NOT RECORDED"
+            print(f"  - {s['company']} ({who}){flag}")
+            print(f"      {s.get('response') or s.get('offer') or ''}")
+            print(f"      next follow-up: {s.get('next_follow_up') or 'NOT SET'}")
     else:
         print("  (nobody due today)")
 
