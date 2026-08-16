@@ -68,6 +68,55 @@ check it has not actually run.
 
 To add work items, edit the seed and run any `ops` command — the merge is automatic.
 
+## Incident 2026-08-06 to 2026-08-15 — exceloweb.com served static-only for 9 days
+
+**Root cause.** A certbot-generated stub `/etc/nginx/conf.d/exceloweb.com.conf`
+was created 2026-08-06. `conf.d/*.conf` loads **alphabetically**, and
+`exceloweb.com.conf` sorts before `exceloweb.conf` (`m` < `n`), so the stub won
+every `server_name` match and the real config was silently ignored. nginx said so
+the whole time:
+
+    nginx: [warn] conflicting server name "exceloweb.com" on 0.0.0.0:443, ignored
+
+**Impact.** The stub had no PHP handler, so the site served static files only:
+
+| Symptom | Detail |
+|---|---|
+| `/wp-json/` 404 | reported by the `credentials` check as a failing `wp:EW` **credential**. It was never a credential — the check reads 404 as auth failure |
+| `/dashboard/` 200 | the CRM `auth_basic` wall was in the ignored file — served **unauthenticated** for 9 days |
+| `.php` source disclosure | `xmlrpc.php`, `wp-login.php` served as `application/octet-stream` with readable source. `wp-config.php` was 403, so DB credentials were not exposed |
+| `deny-data` bypassed | `/data/*.log` and `.bak` files readable. `leads.log` was 0 bytes, so no lead PII leaked |
+| `/voice/hook.php` 404 | voice agent dead; its heartbeat probe reported this as healthy |
+| `xmlrpc.php` unblocked | INC-002 looked deployed — the deny rule was in the ignored file |
+| autoblog publish failures | `Failed: 404 ... nginx` in `autoblog4sites.log` was the WP REST publish step hitting the dead `wp-json` |
+
+The homepage stayed 200 throughout because `index.html` is static, which is why
+nothing looked wrong. Two smoketest checks were reporting the consequences
+(`voice_agent`, `credentials`) but attributed them to the wrong causes.
+
+**Fix.** Merged the full real config into `exceloweb.com.conf` (the filename that
+wins) and renamed the loser to `exceloweb.conf.RETIRED-20260815`. Backups in
+`/home/opc/backups/nginx-20260815/`.
+
+### Failure mode to watch: certbot renewal can recreate the stub
+
+`/etc/letsencrypt/renewal/exceloweb.com.conf` has `installer = nginx`, which is
+what created the duplicate server block in the first place. It can happen again
+at renewal, on any domain.
+
+**Post-renewal check — run after every certbot run:**
+
+    sudo nginx -t 2>&1 | grep -i conflict
+
+Empty output is good. Any "conflicting server name ... ignored" line means a
+vhost is being shadowed: find the duplicate with
+
+    sudo grep -rln "server_name.*<domain>" /etc/nginx/conf.d/*.conf
+
+and remember the **alphabetically first** file wins. Do not assume the file named
+after the domain is the live one — verify with `sudo nginx -T`.
+
+
 ## Secrets
 
 Nothing credential-shaped is committed here, and all rollup detail strings are
